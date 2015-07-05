@@ -1,0 +1,231 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+<head>
+<title>octo_ticker - a jQuery Ticker</title>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<script src="//code.jquery.com/jquery-1.11.3.min.js"></script>
+
+<script>
+// octo_ticker
+// A jQuery powered news ticker
+// Copyright 2015, October Productions (All rights reserved)
+
+jQuery.fn.octo_ticker = function(settings) {
+		settings = jQuery.extend({
+			sourcetext: "<ticker><tickeritem><headline>My headline</headline><content>octo_ticker test text line 1</content><link>http://www.october.com.au</link></tickeritem><tickeritem><headline>Another headline</headline><content>octo_ticker test text line 2</content></tickeritem></ticker>",
+			sourcefile: "tickertest.xml",
+			sourcetype: "xml",
+			speed: 12,
+		}, settings);
+		// set up the container
+		var octo_ticker = jQuery(this);
+		var fullwidth = 1;
+		octo_container = jQuery("<div class='octo_ticker_container'>&nbsp;</div>").appendTo(octo_ticker);
+		octo_strip = jQuery("<div class='octo_ticker_strip'></div>").appendTo(octo_container);
+		var xmlDoc = jQuery.parseXML( settings['sourcetext'] );
+		
+		if( settings['sourcefile'].length > 0)
+		{
+			jQuery.get(settings['sourcefile'],function(newobj) {
+				xmlDoc = newobj;
+				build();
+				scroll();
+			});
+		}
+		else
+		{
+			build();
+			scroll();
+		}
+		
+		// function to build all the ticker items
+		function build() {
+			// these three lines are merely to place the xml in the textarea
+			var serializer = new XMLSerializer(); 
+			var original = serializer.serializeToString( xmlDoc);
+			jQuery("#xmlcontents").val( original );
+			// extract xml item elements and create a ticker item for each
+			jQuery(xmlDoc).find("tickeritem").each(function() {
+				itemdiv = jQuery("<div class='octo_ticker_item'></div>").appendTo(octo_strip);
+				itemdiv.append("<span class='octo_ticker_headline'>" + jQuery(this).find("headline").text() + "</span>");
+				content = jQuery("<div class='octo_ticker_content'> : " + jQuery(this).find("content").text() + "</div>").appendTo(itemdiv);
+				if( jQuery(this).find("link").text().length > 0 )
+				{
+					jQuery(" <a target='_blank' href='" + jQuery(this).find("link").text() + "'>[read more]</a> ").appendTo(content);
+				}
+				jQuery("<span class='octo_ticker_divider'> >> </span>").appendTo(content);
+				fullwidth += jQuery(itemdiv).outerWidth(true);
+			});
+		};
+		
+		// function to animate the ticker
+		function scroll(newspeed) {
+			var speed = (newspeed > 0) ? newspeed : settings['speed'];
+			leftstart = jQuery(octo_container).outerWidth(true) + 9;
+			octo_strip.css( {left: leftstart } );
+			octo_strip.hover( function(){
+				$(this).stop(true,false);
+			}, function(){
+				used = jQuery(octo_container).outerWidth(true) - octo_strip.position().left;
+				tempo = (speed * (fullwidth + jQuery(octo_container).outerWidth(true) + 9 - used) );
+				$(this).animate( { left: ( -5 - fullwidth )} , tempo , "linear" , function() { scroll(speed); } );
+			});
+			tempo = (speed * (fullwidth + jQuery(octo_container).outerWidth(true) + 9) );
+			octo_strip.animate( { left: ( -5 - fullwidth )} , tempo , "linear" , function() { scroll(speed); } );
+		};
+		
+};
+
+</script>
+<style type="text/css">
+
+body {
+		font-size: 20px;
+}
+
+p, ul, li {
+	font-size: 0.9em;
+}
+
+
+/* iphone specific */
+@media only screen and (max-device-width: 480px) { 
+	body {
+		background-color: #66ff66;
+		font-size: 52px;
+	}
+	p, ul, li {
+		font-size: 0.7em;
+	}
+}
+
+/* ipad specific */
+@media only screen and (min-device-width: 768px) and (max-device-width: 1024px) { 
+	body {
+		background-color: #99ccff;
+		font-size: 32px;
+	}
+	p, ul, li {
+		font-size: 0.8em;
+	}
+}
+
+/* class for outer container */
+.octo_ticker_container {
+	border: 1px solid black;
+	background-color: #f9f9f9;
+	padding: 2px 0px 2px 0px;
+	position: relative; 
+	overflow: hidden;
+	height: 1.1em;
+	border-radius: 8px;
+	/* chrome 10+, safari 5.1+ */
+	background: -webkit-linear-gradient(right, rgba(160,175,185,1) 0%, rgba(225,225,225,1) 5%, rgba(245,245,245,1) 50%, rgba(225,225,225,1) 95%, rgba(160,175,185,1) 100%);
+	/* firefox; multiple color stops */
+	background: -moz-linear-gradient(right, rgba(160,175,185,1) 0%, rgba(225,225,225,1) 5%, rgba(245,245,245,1) 50%, rgba(225,225,225,1) 95%, rgba(160,175,185,1) 100%);
+	/* ie10 */
+	background: -ms-linear-gradient(right, rgba(160,175,185,1) 0%, rgba(225,225,225,1) 5%, rgba(245,245,245,1) 50%, rgba(225,225,225,1) 95%, rgba(160,175,185,1) 100%);
+	/* opera 11.1 */
+	background: -o-linear-gradient(right, rgba(160,175,185,1) 0%, rgba(225,225,225,1) 5%, rgba(245,245,245,1) 50%, rgba(225,225,225,1) 95%, rgba(160,175,185,1) 100%);
+	/* The "standard" */
+	background: linear-gradient(to left, rgba(160,175,185,1) 0%, rgba(225,225,225,1) 5%, rgba(245,245,245,1) 50%, rgba(225,225,225,1) 95%, rgba(160,175,185,1) 100%);
+}
+
+/* class for middle container */
+.octo_ticker_middle {
+	position: relative;
+}
+
+/* class for inner container */
+.octo_ticker_strip {
+	display: inline-block;
+	position: absolute; 
+	white-space: nowrap;
+}
+
+/* container for each ticker item */
+.octo_ticker_item {
+	font-size: 0.9em;
+	display: inline-block;
+	white-space: nowrap;
+}
+
+/* ticker headline text */
+.octo_ticker_headline {
+	font-weight: bold;
+	color: #000000;
+}
+
+/* ticker content text */
+.octo_ticker_content {
+	display: inline-block;
+	color: #111111;
+	font-size: 85%;
+}
+
+/* ticker content */
+.octo_ticker_content a {
+	color: #1133cc;
+	font-size: 85%;
+	padding-left: 1em;
+	font-weight: bold;
+	text-decoration: none;
+}
+
+.octo_ticker_content a:hover {
+	color: #cc3311;
+	font-weight: bold;
+}
+
+/* ticker divider */
+.octo_ticker_divider {
+	color: #666666;
+	font-size: 60%;
+	padding-left: 2em;
+	padding-right: 2em;
+}
+</style>
+
+</head>
+<body>
+<h3>
+This is a page to test a news ticker
+</h3>
+<div id="myticker">
+</div>
+<h4>
+This is the contents of the xml file:
+</h4>
+<textarea id="xmlcontents" cols="50" rows="15">
+</textarea>
+
+<p>
+Features currently included:
+<ul>
+	<li>Pulls text from an external xml file</li>
+	<li>Pauses when mouse hovers over an item</li>
+	<li>Responsive</li>
+	<li>Choose your own speed</li>
+</ul>
+</p>
+
+<p>
+Some ideas for further improving this:
+<ul>
+	<li>Refresh after completing a cycle?</li>
+	<li>Must allow for multiple device types</li>
+	<li>Restart after tapped pause on ipad/iphone</li>
+</ul>
+</p>
+<script>
+
+document.writeln("Screen width = " + screen.width + " = " + jQuery(window).width() );
+// trigger the ticker
+$("#myticker").octo_ticker({
+
+});
+
+</script>
+
+</body>
+</html>
